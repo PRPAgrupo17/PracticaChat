@@ -1,0 +1,37 @@
+OBJETIVOS INICIALES
+
+Hacer un chat que habiendo n usuarios conectados podamos mantener conversaciones simultaneas con hasta n usuarios
+
+-La identificación de cada cliente se lleva a cabo mediante un apodo (nickname), aportado por el usuario cuando se incorpora al chat.
+
+El servidor gestiona:
+Los apodos y direcciones de red de los distintos usuarios, de forma que los clientes únicamente utilizan los apodos (nombres simbólicos) para intercambiar información, y el servidor realiza la conversión entre nombre simbólico y dirección física
+La recepción de información y su difusión a los distintos usuarios
+El alta y baja (conexión y desconexión) de usuarios.
+
+El cliente gestiona:
+La edición del texto que se desea remitir al servidor
+La visualización del texto remitido por otros usuarios
+
+
+Conexión
+--------
+El servidor comprueba si el apodo ya existe
+	si ya esta en uso informar al cliente de que elija otro
+	si no que remita a todos los clientes que se a incorporado un nuevo cliente con ese apodo
+	si entra un cliente sin apodo, el servidor le asigna como apodo su id o el apodo cliente1, cliente 2 ......
+
+El cliente que desea conectarse especifica como argumento el apodo a utilizar; en consecuencia la aplicación remite al servidor el apodo del nuevo cliente.
+
+El cliente puede cambiar de apodo posteriormente si coloca un mensaje "nuevoApodo".podemos hacer que el servidor remita a todos los clientes que el cliente con el apodo antiguo lo se ha cambiado a un apodo nuevo
+
+cuando un usuario se desconecta el servidor informa de llo a todos los demás indicando "el usuario apodo ha abandonado el chat"
+
+Mensajes
+--------
+Pueden haber 2 formas de mensajes:
+-privado: el cliente debe elegir un usuario indicando su apodo, el servidor los conecta y los mensajes solo los pueden leer los 2 interlocutores.
+
+-publico: si el cliente indica "ParaTodos" los mensajes los mandará a todos los demas clientes menos a el mismo quiza.
+
+
