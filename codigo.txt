@@ -1,0 +1,146 @@
+"""
+def send_msg(conn,msg,info):
+    
+    with Client(address=(info['address'],info['port']),authkey=info['authkey']) as conn:
+        conn.send(msg)
+
+
+def manage(conn,lock,database):
+    
+    while True:
+        try:
+            temp= conn.recv()
+            order,client_info = temp['order'], temp['info']
+            info_to_add = {'nickname':client_info['name'], 'address':client_info['address']}
+            is_registered = (client_info['name'] in [t['nickname'] for t in database]) 
+            
+            if order == '__join__' and is_registered:
+#                send_msg(conn,'nickname in use, use other',client_info)
+                pass
+                
+            elif order == '__join__' and not is_registered:
+                database.append(info_to_add)
+#                send_msg(conn,'welcome',client_info)
+                print(f'client {client_info["name"]} is now online')
+                
+            elif order == '__quit__':
+                print(f'client {client_info["name"]} is offline')
+                break  
+            else:
+                print(order)                      
+        except:
+            print(f'client {client_info["name"]} apparently crashed')
+            traceback.print_exc()
+            break
+        
+    database.remove(info_to_add)
+    conn.close()
+    print(f'client {client_info["name"]} removed from database')
+    
+
+
+if __name__ == '__main__':
+    
+    ip_address ='127.0.0.1'
+    server_port = 6000
+    if len(sys .argv)>1:
+        ip_address = sys.argv[1]
+        
+    with Listener(address=(ip_address, server_port),authkey=b'secret password server') as listener:
+        print('listener starting')  
+        m = Manager()
+        database = m.list()
+        lock = m.Lock()
+        
+        while True:
+            try:
+                conn = listener.accept()
+                print ('connection accepted from', listener.last_accepted)
+                p = Process(target=manage, args=(conn,lock,database))
+                p.start()
+            except:
+                pass           
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+if __name__ == '__main__':
+    
+    server_address = '127.0.0.1'
+    server_port = 6000
+    port = 6001
+    authkey=b'secret client server'
+    if len(sys .argv)>1:
+        server_address = sys.argv[1]
+    if len(sys .argv)>2:
+        port = int(sys.argv[2])
+    
+    name = input('Your name to use: ')
+    address = input('Your ip_address: ')
+    
+    client_info = {'name':name,'address':address,'authkey':authkey,'port':port}  
+    
+    with Client(address=(server_address, server_port),authkey=b'secret password server') as conn:
+        
+        to_server = {'order':'__join__','info':client_info}   
+        conn.send(to_server)
+
+        while True:
+            msg = input('enter message ("__quit__" will exit): ')
+            if msg == "__quit__":
+                to_server['order'] = msg
+                conn.send(to_server)
+                break
+            else:
+                to_server['order'] = msg
+                conn.send(to_server)
+               
+        print('client exited')
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+git@github.com:PRPAgrupo17/PracticaChat.git

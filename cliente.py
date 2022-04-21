@@ -10,8 +10,9 @@ from multiprocessing import Process, Manager, Lock
 from multiprocessing.connection import Client
 import sys
 from time import time
+import traceback
 
-# client_info = {'msg','name','address','authkey'm'port'}
+# client_info = {'name','address','authkey','port'}
         
 
 if __name__ == '__main__':
@@ -32,17 +33,27 @@ if __name__ == '__main__':
     
     with Client(address=(server_address, server_port),authkey=b'secret password server') as conn:
         
-        to_server = {'order':'__join__','info':client_info}   
+        to_server = {'request':'__join__','info':client_info}   
         conn.send(to_server)
+        print(conn.recv())
 
         while True:
-            msg = input('enter message ("__quit__" will exit): ')
-            if msg == "__quit__":
-                to_server['order'] = msg
+            msg = input('enter (__help__ for command menu): ')
+            if msg == '__help__':
+                print('Commands for server interaction: __help__, __refresh__, __quit__')
+            elif msg == "__quit__":
+                to_server['request'] = msg
                 conn.send(to_server)
                 break
-            else:
-                to_server['order'] = msg
+            elif msg == '__refresh__':
+                to_server['request'] = msg
                 conn.send(to_server)
+                print(conn.recv())
+            elif msg == '__talk__':
+                name = input('Enter user nickname: ')
+                to_server['request'] = msg
+                to_server['user'] = name
+                conn.send(to_server)
+                print(conn.recv())
                
-        print('client exited')
+    print('client exited')

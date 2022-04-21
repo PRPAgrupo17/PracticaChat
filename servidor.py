@@ -12,8 +12,8 @@ import sys
 from time import time
 import traceback
 
-
-# client_info = {'msg','name','address','authkey'm'port'}
+# client_info = {'name','address','authkey','port'}
+# database = [{'nickname'}]
 
 def send_msg(conn,msg,info):
     
@@ -25,28 +25,44 @@ def manage(conn,lock,database):
     
     while True:
         try:
-            temp= conn.recv()
-            order,client_info = temp['order'], temp['info']
+            client_msg = conn.recv()
+            request,client_info = client_msg['request'], client_msg['info']
             info_to_add = {'nickname':client_info['name'], 'address':client_info['address']}
 
-            if order == '__join__':
+            if request == '__join__':             
                 database.append(info_to_add)
-                print(f'client {client_info["name"]} is now online')               
-            elif order == '__quit__':
+                print(f'client {client_info["name"]} is now online')
+                conn.send('conectado')
+                
+            elif request == '__quit__':
                 print(f'client {client_info["name"]} is offline')
-                break  
+                break
+            
+            elif request == '__refresh__':
+                print(f'Sending connected users to {client_info["name"]}')
+                nicknames = [t['nickname'] for t in database if t['nickname'] != client_info['name']]
+                conn.send(nicknames)
+            
+            elif request == '__talk__':
+                name = client_msg['user']
+                print(f'Retreiving <{name}> info; requested by <{client_info["name"]}>')
+                for t in database:
+                    if t['nickname'] == name:
+                        conn.send(t)
+                        break
+                    elif t == database[-1]:
+                        conn.send('That user was not found')      
+                    
             else:
-                print(order)                      
+                print(request)                      
         except:
             print(f'client {client_info["name"]} apparently crashed')
-            traceback.print_exc()
             break
         
     database.remove(info_to_add)
     conn.close()
     print(f'client {client_info["name"]} removed from database')
     
-
 
 if __name__ == '__main__':
     
@@ -67,7 +83,9 @@ if __name__ == '__main__':
                 print ('connection accepted from', listener.last_accepted)
                 p = Process(target=manage, args=(conn,lock,database))
                 p.start()
+            except KeyboardInterrupt:
+                print('\nInterrupt request by administrator\nServer terminated')
+                break
             except:
+                print('\nServer crashed\nHeres the crash report: ')
                 traceback.print_exc()
-            
-            
