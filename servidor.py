@@ -13,7 +13,7 @@ from time import time
 import traceback
 
 # client_info = {'name','address','authkey','port'}
-# database = [{'nickname'}]
+# database = [{'name'}]
 
 def send_msg(conn,msg,info):
     
@@ -27,27 +27,27 @@ def manage(conn,lock,database):
         try:
             client_msg = conn.recv()
             request,client_info = client_msg['request'], client_msg['info']
-            info_to_add = {'nickname':client_info['name'], 'address':client_info['address']}
-
-            if request == '__join__':             
-                database.append(info_to_add)
-                print(f'client {client_info["name"]} is now online')
-                conn.send('conectado')
-                
+            if request == '__join__':
+                if client_info['name'] in [t['name'] for t in database]:
+                    conn.send('Nickname used, choose another')
+                else:
+                    database.append(client_info)
+                    print(f'client {client_info["name"]} is now online')
+                    conn.send('conectado')             
             elif request == '__quit__':
                 print(f'client {client_info["name"]} is offline')
                 break
             
             elif request == '__refresh__':
                 print(f'Sending connected users to {client_info["name"]}')
-                nicknames = [t['nickname'] for t in database if t['nickname'] != client_info['name']]
+                nicknames = [t['name'] for t in database if t['name'] != client_info['name']]
                 conn.send(nicknames)
             
             elif request == '__talk__':
                 name = client_msg['user']
-                print(f'Retreiving <{name}> info; requested by <{client_info["name"]}>')
                 for t in database:
-                    if t['nickname'] == name:
+                    if t['name'] == name:
+                        print(f'Retreiving <{name}> info; requested by <{client_info["name"]}>')
                         conn.send(t)
                         break
                     elif t == database[-1]:
@@ -59,7 +59,7 @@ def manage(conn,lock,database):
             print(f'client {client_info["name"]} apparently crashed')
             break
         
-    database.remove(info_to_add)
+    database.remove(client_info)
     conn.close()
     print(f'client {client_info["name"]} removed from database')
     

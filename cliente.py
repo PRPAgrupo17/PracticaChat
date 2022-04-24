@@ -15,6 +15,22 @@ import traceback
 # client_info = {'name','address','authkey','port'}
         
 
+def client_listener(info):
+    
+        cl = Listener(address=(info['address'],info['port']),
+                             authkey=info['authkey'])
+        print('listener starting')
+        while True:
+            conn = cl.accept()
+            m=conn.recv()
+            if m == 'Speaker has quit the conversation':
+                conn.close()
+                print(m)
+            else:
+                print('message received:', m)
+            
+            
+
 if __name__ == '__main__':
     
     server_address = '127.0.0.1'
@@ -27,20 +43,32 @@ if __name__ == '__main__':
         port = int(sys.argv[2])
     
     name = input('Your name to use: ')
-    address = input('Your ip_address: ')
-    
+    address = input('Your ip_address: ')   
     client_info = {'name':name,'address':address,'authkey':authkey,'port':port}  
     
     with Client(address=(server_address, server_port),authkey=b'secret password server') as conn:
         
+        temp={'address':address,'authkey':authkey,'port':port} 
+        
+        cl = Process(target=client_listener, args =(temp,))
+        cl.start()
+        
         to_server = {'request':'__join__','info':client_info}   
         conn.send(to_server)
-        print(conn.recv())
+        answer = conn.recv()      
+        while answer == 'Nickname used, choose another':
+            m = input('That nickname is already in use, choose another: ')
+            to_server['info']['name'] = m
+            conn.send(to_server)
+            answer = conn.recv()
 
         while True:
             msg = input('enter (__help__ for command menu): ')
             if msg == '__help__':
-                print('Commands for server interaction: __help__, __refresh__, __quit__')
+                print('Commands for server interaction: \n__help__       prints this message'\
+                      '\n__refresh__    returns currently online users'\
+                      '\n__quit__       exits online chat'\
+                      '\n__talk__       enters user to user interface')
             elif msg == "__quit__":
                 to_server['request'] = msg
                 conn.send(to_server)
@@ -50,10 +78,26 @@ if __name__ == '__main__':
                 conn.send(to_server)
                 print(conn.recv())
             elif msg == '__talk__':
-                name = input('Enter user nickname: ')
+                to_server['request'] = '__refresh__'
+                conn.send(to_server)
+                print('Currently online: ',conn.recv()) #primero muestra un __refresh__               
                 to_server['request'] = msg
+                name = input('Enter nickname: ')
                 to_server['user'] = name
                 conn.send(to_server)
-                print(conn.recv())
-               
-    print('client exited')
+                other_client = conn.recv()
+                if other_client == 'That user was not found':
+                    print(other_client)
+                    continue
+                else:
+                    while True:
+                        with Client(address=(other_client['address'], other_client['port']),authkey=other_client['authkey']) as conn_2:
+                            msg = input(f'Message {other_client["name"]}: ')
+                            if msg == '__quit__':
+                                conn_2.send('Speaker has quit the conversation')
+                                break
+                            conn_2.send(msg)
+        cl.terminate()
+        print('client exited')
+
+
