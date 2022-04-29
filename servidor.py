@@ -15,10 +15,11 @@ import traceback
 # client_info = {'name','address','authkey','port'}
 # database = [{'name'}]
 
-def send_msg(conn,msg,info):
+def send_msg_all(msg,database):
     
-    with Client(address=(info['address'],info['port']),authkey=info['authkey']) as conn:
-        conn.send(msg)
+    for info in database:
+        with Client(address=(info['address'],info['port']),authkey=info['authkey']) as conn:
+            conn.send(msg)
 
 
 def manage(conn,lock,database):
@@ -31,11 +32,14 @@ def manage(conn,lock,database):
                 if client_info['name'] in [t['name'] for t in database]:
                     conn.send('Nickname used, choose another')
                 else:
+                    send_msg_all(f'New user online <{client_info["name"]}>',database)
                     database.append(client_info)
                     print(f'client {client_info["name"]} is now online')
-                    conn.send('conectado')             
+                    conn.send('conectado')
+                    
             elif request == '__quit__':
                 print(f'client {client_info["name"]} is offline')
+                send_msg_all(f'User <{client_info["name"]}> has disconnected',database)
                 break
             
             elif request == '__refresh__':
@@ -52,11 +56,14 @@ def manage(conn,lock,database):
                         break
                     elif t == database[-1]:
                         conn.send('That user was not found')      
-                    
+            elif request == '__talkall__':
+                temp = [t for t in database if t['name'] != client_info['name']]
+                conn.send(temp)
             else:
                 print(request)                      
         except:
             print(f'client {client_info["name"]} apparently crashed')
+            send_msg_all(f'User <{client_info["name"]}> apparently crashed',database)
             break
         
     database.remove(client_info)

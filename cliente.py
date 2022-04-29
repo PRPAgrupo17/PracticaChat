@@ -23,7 +23,7 @@ def client_listener(info):
         while True:
             conn = cl.accept()
             m=conn.recv()
-            if m == 'Speaker has quit the conversation':
+            if m == 'Speaker no longer is speaking to you':
                 conn.close()
                 print(m)
             else:
@@ -97,6 +97,16 @@ if __name__ == '__main__':
                                 conn_2.send('Speaker has quit the conversation')
                                 break
                             conn_2.send(msg)
+                            
+            elif msg == '__talkall__':
+                to_server['request'] = '__talkall__'
+                conn.send(to_server)
+                users = conn.recv()
+                message = input('Enter message to all: ')
+                for user in users:
+                    with Client(address=(user['address'], user['port']),authkey=user['authkey']) as conn_2:
+                        conn_2.send(msg)
+                    
         cl.terminate()
         print('client exited')
 
